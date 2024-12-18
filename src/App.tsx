@@ -1,7 +1,7 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
 import './App.css';
-import { AddExpense } from './components/AnimatedModalDemo';
+import { AddExpense } from './components/AddExpense';
+import { AddIncome } from './components/AddIncome';
 
 function App() {
   return (
@@ -18,9 +18,10 @@ function App() {
             className="w-full bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary py-3 rounded-lg transition-colors"
             onClick={() => alert('Adicionar Transação')}
           >
-            Adicionar Transação
+            Visualizar Extrato
           </Button>
           <AddExpense />
+          <AddIncome />
         </section>
       </main>
 
