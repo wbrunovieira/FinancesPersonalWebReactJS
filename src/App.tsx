@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import './App.css';
+import { AddExpense } from './components/AnimatedModalDemo';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
           >
             Adicionar Transação
           </Button>
+          <AddExpense />
         </section>
       </main>
 
