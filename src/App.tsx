@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import './App.css';
 import { AddExpense } from './components/AddExpense';
 import { AddIncome } from './components/AddIncome';
+import { AddInvestment } from './components/AddInvestment';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           </Button>
           <AddExpense />
           <AddIncome />
+          <AddInvestment />
         </section>
       </main>
 
