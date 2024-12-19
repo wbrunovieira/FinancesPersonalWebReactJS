@@ -1,3 +1,4 @@
+import { useEffect, useState, forwardRef } from 'react';
 import {
   Modal,
   ModalBody,
@@ -6,7 +7,14 @@ import {
   ModalTrigger,
 } from './ui/animated-modal';
 
-import { useEffect, useState } from 'react';
+import InputMask, {
+  Props as InputMaskProps,
+} from 'react-input-mask-next';
+
+const MaskedInput = forwardRef<
+  HTMLInputElement,
+  InputMaskProps
+>((props, ref) => <InputMask {...props} inputRef={ref} />);
 
 export function AddExpense() {
   const [amount, setAmount] = useState('');
@@ -14,6 +22,26 @@ export function AddExpense() {
   const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState([]);
   const [date, setDate] = useState('');
+
+  const getCurrentDateTime = () => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(
+      2,
+      '0'
+    );
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(
+      2,
+      '0'
+    );
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  useEffect(() => {
+    setDate(getCurrentDateTime());
+  }, []);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -59,8 +87,6 @@ export function AddExpense() {
       date: new Date(date).toISOString(),
     };
 
-    console.log('handleSubmit payload', payload);
-
     try {
       const response = await fetch(
         'http://localhost:8080/transactions',
@@ -71,8 +97,6 @@ export function AddExpense() {
           mode: 'cors',
         }
       );
-
-      console.log('handleSubmit response', response);
 
       if (!response.ok) {
         const errorMsg = await response.text();
@@ -85,7 +109,7 @@ export function AddExpense() {
       setAmount('');
       setDescription('');
       setCategoryId('');
-      setDate('');
+      setDate(getCurrentDateTime());
     } catch (error) {
       alert('Erro ao adicionar despesa: ' + error.message);
     }
@@ -124,7 +148,6 @@ export function AddExpense() {
                 }
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
-
               <select
                 value={categoryId}
                 onChange={e =>
@@ -135,43 +158,35 @@ export function AddExpense() {
                 <option value="">
                   Selecione uma categoria
                 </option>
-                {categories.length > 0 ? (
-                  categories.map(category => (
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
-                      {category.name}
-                    </option>
-                  ))
-                ) : (
-                  <option>Carregando categorias...</option>
-                )}
+                {categories.map(category => (
+                  <option
+                    key={category.id}
+                    value={category.id}
+                  >
+                    {category.name}
+                  </option>
+                ))}
               </select>
 
-              <input
-                type="datetime-local"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
+              <div className="w-full relative">
+                <MaskedInput
+                  mask="99/99/9999 99:99"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  placeholder="DD/MM/AAAA HH:mm"
+                />
+              </div>
             </div>
-            <ModalFooter className="gap-1">
+
+            <ModalFooter>
               <button
-                className="px-2 py-1 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28"
-                onClick={() => {
-                  setAmount('');
-                  setDescription('');
-                  setCategoryId('');
-                  setDate('');
-                }}
+                onClick={() =>
+                  setDate(getCurrentDateTime())
+                }
               >
                 Cancelar
               </button>
-              <button
-                className="bg-black text-white dark:bg-white dark:text-black text-sm px-2 py-1 rounded-md border border-black w-28"
-                onClick={handleSubmit}
-              >
+              <button onClick={handleSubmit}>
                 Confirmar
               </button>
             </ModalFooter>
