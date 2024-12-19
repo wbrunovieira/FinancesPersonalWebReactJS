@@ -6,27 +6,60 @@ import {
   ModalTrigger,
 } from './ui/animated-modal';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export function AddExpense() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState('');
+  const [categories, setCategories] = useState([]);
   const [date, setDate] = useState('');
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          'http://localhost:8080/categories',
+          {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            mode: 'cors',
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Erro ao buscar categorias: ${response.statusText}`
+          );
+        }
+
+        const data = await response.json();
+        setCategories(data);
+      } catch (error) {
+        alert(
+          'Erro ao carregar as categorias: ' + error.message
+        );
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
   const handleSubmit = async () => {
-    if (!amount || !description || !category || !date) {
+    if (!amount || !description || !categoryId || !date) {
       alert('Preencha todos os campos antes de enviar.');
       return;
     }
 
     const payload = {
-      user_id: 7,
+      user_id: 1,
       amount: parseFloat(amount),
       description,
-      category,
+      category_id: parseInt(categoryId),
       date: new Date(date).toISOString(),
     };
+
+    console.log('handleSubmit payload', payload);
 
     try {
       const response = await fetch(
@@ -35,19 +68,23 @@ export function AddExpense() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
+          mode: 'cors',
         }
       );
 
+      console.log('handleSubmit response', response);
+
       if (!response.ok) {
+        const errorMsg = await response.text();
         throw new Error(
-          `Erro na resposta do servidor: ${response.statusText}`
+          `Erro na resposta do servidor: ${response.status} - ${errorMsg}`
         );
       }
 
       alert('Despesa adicionada com sucesso!');
       setAmount('');
       setDescription('');
-      setCategory('');
+      setCategoryId('');
       setDate('');
     } catch (error) {
       alert('Erro ao adicionar despesa: ' + error.message);
@@ -87,13 +124,31 @@ export function AddExpense() {
                 }
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
-              <input
-                type="text"
-                placeholder="Categoria"
-                value={category}
-                onChange={e => setCategory(e.target.value)}
+
+              <select
+                value={categoryId}
+                onChange={e =>
+                  setCategoryId(e.target.value)
+                }
                 className="w-full p-2 border border-gray-300 rounded-md"
-              />
+              >
+                <option value="">
+                  Selecione uma categoria
+                </option>
+                {categories.length > 0 ? (
+                  categories.map(category => (
+                    <option
+                      key={category.id}
+                      value={category.id}
+                    >
+                      {category.name}
+                    </option>
+                  ))
+                ) : (
+                  <option>Carregando categorias...</option>
+                )}
+              </select>
+
               <input
                 type="datetime-local"
                 value={date}
@@ -107,7 +162,7 @@ export function AddExpense() {
                 onClick={() => {
                   setAmount('');
                   setDescription('');
-                  setCategory('');
+                  setCategoryId('');
                   setDate('');
                 }}
               >
