@@ -1,0 +1,20 @@
+declare module 'react-input-mask' {
+  import React from 'react';
+
+  export interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
+    mask: string;
+    maskChar?: string | null;
+    alwaysShowMask?: boolean;
+    formatChars?: Record<string, string>;
+    inputRef?: React.Ref<HTMLInputElement>;
+    beforeMaskedValueChange?: (
+      newState: { value: string; selection: { start: number; end: number } },
+      oldState: { value: string; selection: { start: number; end: number } },
+      userInput: string | null,
+      maskOptions: { mask: string; maskChar: string | null; alwaysShowMask: boolean }
+    ) => { value: string; selection: { start: number; end: number } };
+  }
+
+  const InputMask: React.ForwardRefExoticComponent<Props & React.RefAttributes<HTMLInputElement>>;
+  export default InputMask;
+}

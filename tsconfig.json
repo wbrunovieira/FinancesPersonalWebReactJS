@@ -1,10 +1,16 @@
 {
   "compilerOptions": {
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  }
+    "jsx": "react-jsx", // Adiciona suporte ao JSX
+    "target": "ES2022",
+    "lib": ["ES2023", "dom"],
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "react-input-mask.d.ts"]
 }

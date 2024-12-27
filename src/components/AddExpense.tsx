@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef } from 'react';
+import { useEffect, useState, forwardRef, ChangeEvent } from 'react';
 import {
   Modal,
   ModalBody,
@@ -7,35 +7,33 @@ import {
   ModalTrigger,
 } from './ui/animated-modal';
 
-import InputMask, {
-  Props as InputMaskProps,
-} from 'react-input-mask-next';
+import InputMask, { Props as InputMaskProps } from 'react-input-mask';
 
-const MaskedInput = forwardRef<
-  HTMLInputElement,
-  InputMaskProps
->((props, ref) => <InputMask {...props} inputRef={ref} />);
+const MaskedInput = forwardRef<HTMLInputElement, InputMaskProps>((props, ref) => (
+  <InputMask {...props} inputRef={ref} />
+));
+interface Category {
+  id: number;
+  name: string;
+}
 
-export function AddExpense() {
-  const [amount, setAmount] = useState('');
-  const [description, setDescription] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [categories, setCategories] = useState([]);
-  const [date, setDate] = useState('');
 
-  const getCurrentDateTime = () => {
+
+
+export function AddExpense(): JSX.Element {
+  const [amount, setAmount] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [date, setDate] = useState<string>('');
+
+  const getCurrentDateTime = (): string => {
     const now = new Date();
     const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(
-      2,
-      '0'
-    );
+    const month = String(now.getMonth() + 1).padStart(2, '0');
     const year = now.getFullYear();
     const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(
-      2,
-      '0'
-    );
+    const minutes = String(now.getMinutes()).padStart(2, '0');
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
 
@@ -44,10 +42,10 @@ export function AddExpense() {
   }, []);
 
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchCategories = async (): Promise<void> => {
       try {
         const response = await fetch(
-          'http://localhost:8080/categories',
+          `${import.meta.env.VITE_API_BASE_URL}/categories`,
           {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
@@ -61,19 +59,21 @@ export function AddExpense() {
           );
         }
 
-        const data = await response.json();
+        const data: Category[] = await response.json();
         setCategories(data);
-      } catch (error) {
-        alert(
-          'Erro ao carregar as categorias: ' + error.message
-        );
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          alert('Erro ao carregar as categorias: ' + error.message);
+        } else {
+          alert('Erro desconhecido ao carregar categorias.');
+        }
       }
     };
 
     fetchCategories();
   }, []);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (): Promise<void> => {
     if (!amount || !description || !categoryId || !date) {
       alert('Preencha todos os campos antes de enviar.');
       return;
@@ -83,13 +83,13 @@ export function AddExpense() {
       user_id: 1,
       amount: parseFloat(amount),
       description,
-      category_id: parseInt(categoryId),
+      category_id: parseInt(categoryId, 10),
       date: new Date(date).toISOString(),
     };
 
     try {
       const response = await fetch(
-        'http://localhost:8080/transactions',
+        `${import.meta.env.VITE_API_BASE_URL}/transactions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,9 +110,28 @@ export function AddExpense() {
       setDescription('');
       setCategoryId('');
       setDate(getCurrentDateTime());
-    } catch (error) {
-      alert('Erro ao adicionar despesa: ' + error.message);
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        alert('Erro ao adicionar despesa: ' + error.message);
+      } else {
+        alert('Erro desconhecido ao adicionar despesa.');
+      }
     }
+  };
+
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const { value } = e.target;
+    setAmount(value);
+  };
+
+  const handleDescriptionChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    const { value } = e.target;
+    setDescription(value);
+  };
+
+  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    const { value } = e.target;
+    setCategoryId(value);
   };
 
   return (
@@ -136,59 +155,45 @@ export function AddExpense() {
                 type="number"
                 placeholder="Valor"
                 value={amount}
-                onChange={e => setAmount(e.target.value)}
+                onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <input
                 type="text"
                 placeholder="Descrição"
                 value={description}
-                onChange={e =>
-                  setDescription(e.target.value)
-                }
+                onChange={handleDescriptionChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <select
                 value={categoryId}
-                onChange={e =>
-                  setCategoryId(e.target.value)
-                }
+                onChange={handleCategoryChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
-                <option value="">
-                  Selecione uma categoria
-                </option>
-                {categories.map(category => (
-                  <option
-                    key={category.id}
-                    value={category.id}
-                  >
+                <option value="">Selecione uma categoria</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
                     {category.name}
                   </option>
                 ))}
               </select>
-
               <div className="w-full relative">
                 <MaskedInput
                   mask="99/99/9999 99:99"
                   value={date}
-                  onChange={e => setDate(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setDate(e.target.value)
+                  }
                   placeholder="DD/MM/AAAA HH:mm"
                 />
               </div>
             </div>
 
             <ModalFooter>
-              <button
-                onClick={() =>
-                  setDate(getCurrentDateTime())
-                }
-              >
+              <button onClick={() => setDate(getCurrentDateTime())}>
                 Cancelar
               </button>
-              <button onClick={handleSubmit}>
-                Confirmar
-              </button>
+              <button onClick={handleSubmit}>Confirmar</button>
             </ModalFooter>
           </ModalContent>
         </ModalBody>
