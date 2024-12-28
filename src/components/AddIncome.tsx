@@ -126,7 +126,7 @@ export function AddIncome() {
     };
 
 
-      const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+    const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
         setCategoryId(e.target.value);
       };
     
