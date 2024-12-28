@@ -1,4 +1,4 @@
-import { useEffect, useState, forwardRef, ChangeEvent } from 'react';
+import { useEffect, useState, ChangeEvent } from 'react';
 import {
   Modal,
   ModalBody,
@@ -6,19 +6,13 @@ import {
   ModalFooter,
   ModalTrigger,
 } from './ui/animated-modal';
+import { formatDateTime, isValidDateTime } from '../utils/dateUtils';
 
-import InputMask, { Props as InputMaskProps } from 'react-input-mask';
 
-const MaskedInput = forwardRef<HTMLInputElement, InputMaskProps>((props, ref) => (
-  <InputMask {...props} inputRef={ref} />
-));
 interface Category {
   id: number;
   name: string;
 }
-
-
-
 
 export function AddExpense(): JSX.Element {
   const [amount, setAmount] = useState<string>('');
@@ -79,12 +73,17 @@ export function AddExpense(): JSX.Element {
       return;
     }
 
+    if (!isValidDateTime(date)) {
+      alert('A data/hora fornecida não é válida.');
+      return;
+    }
+
     const payload = {
       user_id: 1,
       amount: parseFloat(amount),
       description,
       category_id: parseInt(categoryId, 10),
-      date: new Date(date).toISOString(),
+      date: new Date(date.split('/').reverse().join('-').replace(' ', 'T')).toISOString(),
     };
 
     try {
@@ -120,18 +119,15 @@ export function AddExpense(): JSX.Element {
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const { value } = e.target;
-    setAmount(value);
+    setAmount(e.target.value);
   };
 
   const handleDescriptionChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    const { value } = e.target;
-    setDescription(value);
+    setDescription(e.target.value);
   };
 
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    const { value } = e.target;
-    setCategoryId(value);
+    setCategoryId(e.target.value);
   };
 
   return (
@@ -177,16 +173,18 @@ export function AddExpense(): JSX.Element {
                   </option>
                 ))}
               </select>
-              <div className="w-full relative">
-                <MaskedInput
-                  mask="99/99/9999 99:99"
-                  value={date}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                    setDate(e.target.value)
+              <input
+                type="text"
+                value={date}
+                onChange={(e) => setDate(formatDateTime(e.target.value))}
+                onBlur={() => {
+                  if (!isValidDateTime(date)) {
+                    alert('Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.');
                   }
-                  placeholder="DD/MM/AAAA HH:mm"
-                />
-              </div>
+                }}
+                placeholder="DD/MM/AAAA HH:mm"
+                className="w-full p-2 border border-gray-300 rounded-md"
+              />
             </div>
 
             <ModalFooter>
