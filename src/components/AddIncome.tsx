@@ -5,8 +5,8 @@ import {
   ModalFooter,
   ModalTrigger,
 } from './ui/animated-modal';
-
 import { useState } from 'react';
+import { formatDateTime, isValidDateTime } from '../utils/dateUtils';
 
 export function AddIncome() {
   const [amount, setAmount] = useState('');
@@ -19,40 +19,46 @@ export function AddIncome() {
       alert('Preencha todos os campos antes de enviar.');
       return;
     }
-
+  
+    if (!isValidDateTime(date)) {
+      alert('A data/hora fornecida não é válida.');
+      return;
+    }
+  
+    const [day, month, yearAndTime] = date.split('/');
+    const [year, time] = yearAndTime.split(' ');
+    const formattedDate = `${year}-${month}-${day}T${time}`;
+  
     const payload = {
       user_id: 7,
       amount: parseFloat(amount),
       description,
       category,
-      date: new Date(date).toISOString(),
+      date: new Date(formattedDate).toISOString(),
     };
-
+  
     try {
-      const response = await fetch(
-        'http://localhost:8080/incomes',
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      );
-
+      const response = await fetch('http://localhost:8080/incomes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+  
       if (!response.ok) {
-        throw new Error(
-          `Erro na resposta do servidor: ${response.statusText}`
-        );
+        throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
       }
-
+  
       alert('Rendimento adicionado com sucesso!');
       setAmount('');
       setDescription('');
       setCategory('');
       setDate('');
     } catch (error) {
-      alert(
-        'Erro ao adicionar rendimento: ' + error.message
-      );
+      if (error instanceof Error) {
+        alert('Erro ao adicionar rendimento: ' + error.message);
+      } else {
+        alert('Erro desconhecido ao adicionar rendimento.');
+      }
     }
   };
 
@@ -77,29 +83,35 @@ export function AddIncome() {
                 type="number"
                 placeholder="Valor"
                 value={amount}
-                onChange={e => setAmount(e.target.value)}
+                onChange={(e) => setAmount(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <input
                 type="text"
                 placeholder="Descrição"
                 value={description}
-                onChange={e =>
-                  setDescription(e.target.value)
-                }
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <input
                 type="text"
                 placeholder="Categoria"
                 value={category}
-                onChange={e => setCategory(e.target.value)}
+                onChange={(e) => setCategory(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <input
-                type="datetime-local"
+                type="text"
                 value={date}
-                onChange={e => setDate(e.target.value)}
+                onChange={(e) => setDate(formatDateTime(e.target.value))}
+                onBlur={() => {
+                  if (!isValidDateTime(date)) {
+                    alert(
+                      'Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.'
+                    );
+                  }
+                }}
+                placeholder="DD/MM/AAAA HH:mm"
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>

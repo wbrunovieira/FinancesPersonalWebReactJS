@@ -39,7 +39,7 @@ export function AddExpense(): JSX.Element {
     const fetchCategories = async (): Promise<void> => {
       try {
         const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/categories`,
+          `${import.meta.env.VITE_API_BASE_URL}/categories?type=expense`,
           {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
@@ -72,20 +72,26 @@ export function AddExpense(): JSX.Element {
       alert('Preencha todos os campos antes de enviar.');
       return;
     }
-
+  
     if (!isValidDateTime(date)) {
       alert('A data/hora fornecida não é válida.');
       return;
     }
+  
 
+    const [day, month, yearAndTime] = date.split('/');
+    const [year, time] = yearAndTime.split(' ');
+    const formattedDate = `${year}-${month}-${day}T${time}`;
+  
     const payload = {
       user_id: 1,
       amount: parseFloat(amount),
       description,
       category_id: parseInt(categoryId, 10),
-      date: new Date(date.split('/').reverse().join('-').replace(' ', 'T')).toISOString(),
+      type: 'expense', 
+      date: new Date(formattedDate).toISOString(),
     };
-
+  
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/transactions`,
@@ -96,14 +102,14 @@ export function AddExpense(): JSX.Element {
           mode: 'cors',
         }
       );
-
+  
       if (!response.ok) {
         const errorMsg = await response.text();
         throw new Error(
           `Erro na resposta do servidor: ${response.status} - ${errorMsg}`
         );
       }
-
+  
       alert('Despesa adicionada com sucesso!');
       setAmount('');
       setDescription('');
