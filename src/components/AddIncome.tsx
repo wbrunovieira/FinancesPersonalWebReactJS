@@ -5,62 +5,131 @@ import {
   ModalFooter,
   ModalTrigger,
 } from './ui/animated-modal';
-import { useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { formatDateTime, isValidDateTime } from '../utils/dateUtils';
 
+
+interface Category {
+  id: number;
+  name: string;
+}
 export function AddIncome() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const [date, setDate] = useState('');
 
-  const handleSubmit = async () => {
-    if (!amount || !description || !category || !date) {
-      alert('Preencha todos os campos antes de enviar.');
-      return;
-    }
-  
-    if (!isValidDateTime(date)) {
-      alert('A data/hora fornecida não é válida.');
-      return;
-    }
-  
-    const [day, month, yearAndTime] = date.split('/');
-    const [year, time] = yearAndTime.split(' ');
-    const formattedDate = `${year}-${month}-${day}T${time}`;
-  
-    const payload = {
-      user_id: 7,
-      amount: parseFloat(amount),
-      description,
-      category,
-      date: new Date(formattedDate).toISOString(),
-    };
-  
-    try {
-      const response = await fetch('http://localhost:8080/incomes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-  
-      if (!response.ok) {
-        throw new Error(`Erro na resposta do servidor: ${response.statusText}`);
-      }
-  
-      alert('Rendimento adicionado com sucesso!');
-      setAmount('');
-      setDescription('');
-      setCategory('');
-      setDate('');
-    } catch (error) {
-      if (error instanceof Error) {
-        alert('Erro ao adicionar rendimento: ' + error.message);
-      } else {
-        alert('Erro desconhecido ao adicionar rendimento.');
-      }
-    }
+  const getCurrentDateTime = (): string => {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const year = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
+
+  useEffect(() => {
+    setDate(getCurrentDateTime());
+  }, []);
+
+
+   useEffect(() => {
+      const fetchCategories = async (): Promise<void> => {
+        try {
+          const response = await fetch(
+            `${import.meta.env.VITE_API_BASE_URL}/categories?type=income`,
+            {
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              mode: 'cors',
+            }
+          );
+  
+          if (!response.ok) {
+            throw new Error(
+              `Erro ao buscar categorias: ${response.statusText}`
+            );
+          }
+  
+          const data: Category[] = await response.json();
+          setCategories(data);
+        } catch (error: unknown) {
+          if (error instanceof Error) {
+            alert('Erro ao carregar as categorias: ' + error.message);
+          } else {
+            alert('Erro desconhecido ao carregar categorias.');
+          }
+        }
+      };
+  
+      fetchCategories();
+    }, []);
+
+    const handleSubmit = async (): Promise<void> => {
+      if (!amount || !description || !categoryId || !date) {
+        alert('Preencha todos os campos antes de enviar.');
+        return;
+      }
+    
+      if (!isValidDateTime(date)) {
+        alert('A data/hora fornecida não é válida.');
+        return;
+      }
+    
+  
+      const [day, month, yearAndTime] = date.split('/');
+      const [year, time] = yearAndTime.split(' ');
+      const formattedDate = `${year}-${month}-${day}T${time}`;
+    
+      const payload = {
+        user_id: 1,
+        amount: parseFloat(amount),
+        description,
+        category_id: parseInt(categoryId, 10),
+        type: 'income', 
+        date: new Date(formattedDate).toISOString(),
+      };
+    
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/transactions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            mode: 'cors',
+          }
+        );
+    
+        if (!response.ok) {
+          const errorMsg = await response.text();
+          throw new Error(
+            `Erro na resposta do servidor: ${response.status} - ${errorMsg}`
+          );
+        }
+    
+        alert('income adicionada com sucesso!');
+        setAmount('');
+        setDescription('');
+        setCategoryId('');
+        setDate(getCurrentDateTime());
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          alert('Erro ao adicionar income: ' + error.message);
+        } else {
+          alert('Erro desconhecido ao adicionar income.');
+        }
+      }
+    };
+
+
+      const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+        setCategoryId(e.target.value);
+      };
+    
 
   return (
     <div className="py-4 flex items-center justify-center">
@@ -93,22 +162,25 @@ export function AddIncome() {
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
-              <input
-                type="text"
-                placeholder="Categoria"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
+                     <select
+                value={categoryId}
+                onChange={handleCategoryChange}
                 className="w-full p-2 border border-gray-300 rounded-md"
-              />
+              >
+                <option value="">Selecione uma categoria</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
               <input
                 type="text"
                 value={date}
                 onChange={(e) => setDate(formatDateTime(e.target.value))}
                 onBlur={() => {
                   if (!isValidDateTime(date)) {
-                    alert(
-                      'Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.'
-                    );
+                    alert('Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.');
                   }
                 }}
                 placeholder="DD/MM/AAAA HH:mm"
@@ -116,23 +188,10 @@ export function AddIncome() {
               />
             </div>
             <ModalFooter className="gap-1">
-              <button
-                className="px-2 py-1 bg-gray-200 text-black dark:bg-black dark:border-black dark:text-white border border-gray-300 rounded-md text-sm w-28"
-                onClick={() => {
-                  setAmount('');
-                  setDescription('');
-                  setCategory('');
-                  setDate('');
-                }}
-              >
+            <button onClick={() => setDate(getCurrentDateTime())}>
                 Cancelar
               </button>
-              <button
-                className="bg-black text-white dark:bg-white dark:text-black text-sm px-2 py-1 rounded-md border border-black w-28"
-                onClick={handleSubmit}
-              >
-                Confirmar
-              </button>
+              <button onClick={handleSubmit}>Confirmar</button>
             </ModalFooter>
           </ModalContent>
         </ModalBody>
