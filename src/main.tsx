@@ -9,6 +9,7 @@ import {
   Routes,
 } from 'react-router-dom';
 import Statement from './components/Statement';
+import Dashboard from './components/ Dashboard';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -16,6 +17,7 @@ createRoot(document.getElementById('root')!).render(
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/statement" element={<Statement />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </BrowserRouter>{' '}
   </StrictMode>

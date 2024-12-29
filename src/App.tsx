@@ -24,6 +24,12 @@ function App() {
           >
             Visualizar Extrato
           </Button>
+          <Button
+            className="mt-2 w-full bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary py-3 rounded-lg transition-colors"
+            onClick={() => navigate('/dashboard')}
+          >
+            Ir para Dashboard
+          </Button>
           <AddExpense />
           <AddIncome />
           <AddInvestment />
