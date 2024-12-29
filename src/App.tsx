@@ -1,10 +1,13 @@
-import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
+
 import './App.css';
 import { AddExpense } from './components/AddExpense';
 import { AddIncome } from './components/AddIncome';
 import { AddInvestment } from './components/AddInvestment';
+import { Button } from './components/ui/button';
 
 function App() {
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen h-full w-full flex flex-col items-center justify-center bg-foreground text-foreground">
       <header className="w-full py-4 bg-primary text-primary-foreground shadow-lg">
@@ -17,7 +20,7 @@ function App() {
         <section className="bg-card shadow-md rounded-lg p-8 w-full max-w-md text-center">
           <Button
             className="w-full bg-primary text-primary-foreground hover:bg-primary-foreground hover:text-primary py-3 rounded-lg transition-colors"
-            onClick={() => alert('Adicionar Transação')}
+            onClick={() => navigate('/statement')}
           >
             Visualizar Extrato
           </Button>
