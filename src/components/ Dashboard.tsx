@@ -5,6 +5,7 @@ interface Transaction {
   id: number;
   amount: number;
   category: string;
+  description: string;
   type: string;
   date: string;
 }
@@ -192,7 +193,7 @@ const Dashboard = () => {
               </ul>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1  gap-4">
               <div className="bg-card shadow-md rounded-lg p-4">
                 <h3 className="text-lg font-bold mb-2">
                   Despesas
@@ -201,11 +202,23 @@ const Dashboard = () => {
                   .filter(t => t.type === 'expense')
                   .map(t => (
                     <p key={t.id} className="py-1 border-b">
-                      {t.category}:{' '}
-                      {t.amount.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
+                      <span className="font-bold">
+                        {new Date(
+                          t.date
+                        ).toLocaleDateString('pt-BR')}
+                        :
+                      </span>{' '}
+                      <span>{t.category}</span> -{' '}
+                      <span className="italic">
+                        {t.description}
+                      </span>
+                      :{' '}
+                      <span>
+                        {t.amount.toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}
+                      </span>
                     </p>
                   ))}
               </div>
@@ -217,11 +230,23 @@ const Dashboard = () => {
                   .filter(t => t.type === 'income')
                   .map(t => (
                     <p key={t.id} className="py-1 border-b">
-                      {t.category}:{' '}
-                      {t.amount.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
+                      <span className="font-bold">
+                        {new Date(
+                          t.date
+                        ).toLocaleDateString('pt-BR')}
+                        :
+                      </span>{' '}
+                      <span>{t.category}</span> -{' '}
+                      <span className="italic">
+                        {t.description}
+                      </span>
+                      :{' '}
+                      <span>
+                        {t.amount.toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}
+                      </span>
                     </p>
                   ))}
               </div>
@@ -233,11 +258,23 @@ const Dashboard = () => {
                   .filter(t => t.type === 'investment')
                   .map(t => (
                     <p key={t.id} className="py-1 border-b">
-                      {t.category}:{' '}
-                      {t.amount.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
+                      <span className="font-bold">
+                        {new Date(
+                          t.date
+                        ).toLocaleDateString('pt-BR')}
+                        :
+                      </span>{' '}
+                      <span>{t.category}</span> -{' '}
+                      <span className="italic">
+                        {t.description}
+                      </span>
+                      :{' '}
+                      <span>
+                        {t.amount.toLocaleString('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                        })}
+                      </span>
                     </p>
                   ))}
               </div>
