@@ -190,7 +190,7 @@ export function AddInvestment() {
                      className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
-            <ModalFooter className="gap-1">
+            <ModalFooter className="gap-2">
             <button onClick={() => setDate(getCurrentDateTime())}>
                 Cancelar
               </button>

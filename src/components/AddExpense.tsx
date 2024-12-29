@@ -1,13 +1,4 @@
 import { useEffect, useState, ChangeEvent } from 'react';
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalFooter,
-  ModalTrigger,
-} from './ui/animated-modal';
-import { formatDateTime, isValidDateTime } from '../utils/dateUtils';
-
 
 interface Category {
   id: number;
@@ -15,83 +6,75 @@ interface Category {
 }
 
 export function AddExpense(): JSX.Element {
-  const [amount, setAmount] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [categoryId, setCategoryId] = useState<string>('');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
+  const [categoryId, setCategoryId] = useState('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [date, setDate] = useState<string>('');
+  const [date, setDate] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Helper: Obter data e hora atual formatada
   const getCurrentDateTime = (): string => {
     const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    return `${day}/${month}/${year} ${hours}:${minutes}`;
+    return now.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   };
 
+  // Fetch categorias ao carregar o componente
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/categories?type=expense`,
+          { method: 'GET', headers: { 'Content-Type': 'application/json' } }
+        );
+        if (!response.ok) {
+          throw new Error(`Erro ao buscar categorias: ${response.statusText}`);
+        }
+        const data: Category[] = await response.json();
+        setCategories(data);
+      } catch (error) {
+        console.error('Erro ao carregar categorias:', error);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Set data atual ao carregar o componente
   useEffect(() => {
     setDate(getCurrentDateTime());
   }, []);
 
+  // Fechar modal com Esc
   useEffect(() => {
-    const fetchCategories = async (): Promise<void> => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/categories?type=expense`,
-          {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' },
-            mode: 'cors',
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error(
-            `Erro ao buscar categorias: ${response.statusText}`
-          );
-        }
-
-        const data: Category[] = await response.json();
-        setCategories(data);
-      } catch (error: unknown) {
-        if (error instanceof Error) {
-          alert('Erro ao carregar as categorias: ' + error.message);
-        } else {
-          alert('Erro desconhecido ao carregar categorias.');
-        }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && isModalOpen) {
+        resetForm();
       }
     };
 
-    fetchCategories();
-  }, []);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isModalOpen]);
 
-  const handleSubmit = async (): Promise<void> => {
+  // Submit: Enviar dados para API
+  const handleSubmit = async () => {
     if (!amount || !description || !categoryId || !date) {
       alert('Preencha todos os campos antes de enviar.');
       return;
     }
-  
-    if (!isValidDateTime(date)) {
-      alert('A data/hora fornecida não é válida.');
-      return;
-    }
-  
 
-    const [day, month, yearAndTime] = date.split('/');
-    const [year, time] = yearAndTime.split(' ');
-    const formattedDate = `${year}-${month}-${day}T${time}`;
-  
+    const formattedDate = date.split('/').reverse().join('-') + ':00';
     const payload = {
       user_id: 1,
       amount: parseFloat(amount),
       description,
       category_id: parseInt(categoryId, 10),
-      type: 'expense', 
+      type: 'expense',
       date: new Date(formattedDate).toISOString(),
     };
-  
+
     try {
       const response = await fetch(
         `${import.meta.env.VITE_API_BASE_URL}/transactions`,
@@ -99,77 +82,62 @@ export function AddExpense(): JSX.Element {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
-          mode: 'cors',
         }
       );
-  
       if (!response.ok) {
         const errorMsg = await response.text();
-        throw new Error(
-          `Erro na resposta do servidor: ${response.status} - ${errorMsg}`
-        );
+        throw new Error(`Erro na resposta do servidor: ${response.status} - ${errorMsg}`);
       }
-  
       alert('Despesa adicionada com sucesso!');
-      setAmount('');
-      setDescription('');
-      setCategoryId('');
-      setDate(getCurrentDateTime());
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        alert('Erro ao adicionar despesa: ' + error.message);
-      } else {
-        alert('Erro desconhecido ao adicionar despesa.');
-      }
+      resetForm();
+    } catch (error) {
+      console.error('Erro ao adicionar despesa:', error);
     }
   };
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setAmount(e.target.value);
+  // Helper: Resetar o formulário e fechar modal
+  const resetForm = () => {
+    setAmount('');
+    setDescription('');
+    setCategoryId('');
+    setDate(getCurrentDateTime());
+    setIsModalOpen(false);
   };
 
-  const handleDescriptionChange = (e: ChangeEvent<HTMLInputElement>): void => {
-    setDescription(e.target.value);
-  };
-
-  const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
-    setCategoryId(e.target.value);
-  };
-
+  // Render
   return (
     <div className="py-4 flex items-center justify-center">
-      <Modal>
-        <ModalTrigger className="bg-black dark:bg-white dark:text-black text-white flex justify-center group/modal-btn">
-          <span className="group-hover/modal-btn:translate-x-40 text-center transition duration-500">
-            Adicionar Despesa
-          </span>
-          <div className="-translate-x-40 group-hover/modal-btn:translate-x-0 flex items-center justify-center absolute inset-0 transition duration-500 text-white z-20">
-            💸
-          </div>
-        </ModalTrigger>
-        <ModalBody>
-          <ModalContent>
-            <h4 className="text-lg md:text-2xl text-neutral-600 dark:text-neutral-100 font-bold text-center mb-8">
-              Adicione uma nova despesa
-            </h4>
-            <div className="py-10 flex flex-col gap-6 items-start justify-start max-w-sm mx-auto">
+      {/* Botão para abrir o modal */}
+      <button
+        className="bg-black text-white p-2 rounded-md hover:bg-gray-800 transition duration-300"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Adicionar Despesa
+      </button>
+
+      {/* Render Condicional do Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
+            <h4 className="text-lg font-bold mb-4">Adicione uma nova despesa</h4>
+            <div className="flex flex-col gap-4">
               <input
                 type="number"
                 placeholder="Valor"
                 value={amount}
-                onChange={handleInputChange}
+                onChange={(e) => setAmount(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <input
                 type="text"
                 placeholder="Descrição"
                 value={description}
-                onChange={handleDescriptionChange}
+                onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
               <select
                 value={categoryId}
-                onChange={handleCategoryChange}
+                onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">Selecione uma categoria</option>
@@ -181,27 +149,28 @@ export function AddExpense(): JSX.Element {
               </select>
               <input
                 type="text"
-                value={date}
-                onChange={(e) => setDate(formatDateTime(e.target.value))}
-                onBlur={() => {
-                  if (!isValidDateTime(date)) {
-                    alert('Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.');
-                  }
-                }}
                 placeholder="DD/MM/AAAA HH:mm"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
-
-            <ModalFooter>
-              <button onClick={() => setDate(getCurrentDateTime())}>
+            <div className="flex justify-end gap-4 mt-4">
+              <button
+                className="bg-gray-300 text-black p-2 rounded-md hover:bg-gray-400 transition duration-300"
+                onClick={resetForm}
+              >
                 Cancelar
               </button>
-              <button onClick={handleSubmit}>Confirmar</button>
-            </ModalFooter>
-          </ModalContent>
-        </ModalBody>
-      </Modal>
+              <button
+                className="bg-neutral-800 text-neutral-100 p-2 rounded-md hover:bg-neutral-700 transition duration-300"                onClick={handleSubmit}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
