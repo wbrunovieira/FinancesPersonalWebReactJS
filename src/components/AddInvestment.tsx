@@ -20,6 +20,8 @@ export function AddInvestment() {
    const [categoryId, setCategoryId] = useState<string>('');
    const [categories, setCategories] = useState<Category[]>([]);
   const [date, setDate] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
 
     const getCurrentDateTime = (): string => {
       const now = new Date();
@@ -34,6 +36,19 @@ export function AddInvestment() {
     useEffect(() => {
       setDate(getCurrentDateTime());
     }, []);
+
+    useEffect(() => {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Escape' && isModalOpen) {
+          resetForm();
+        }
+      };
+  
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isModalOpen]);
 
     useEffect(() => {
           const fetchCategories = async (): Promise<void> => {
@@ -124,81 +139,83 @@ export function AddInvestment() {
       }
     };
 
-        const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
+ const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
             setCategoryId(e.target.value);
           };
-
+          const resetForm = () => {
+            setAmount('');
+            setDescription('');
+            setCategoryId('');
+            setDate(getCurrentDateTime());
+            setIsModalOpen(false);
+          };
   return (
     <div className="py-4 flex items-center justify-center">
-      <Modal>
-        <ModalTrigger className="bg-black dark:bg-white dark:text-black text-white flex justify-center group/modal-btn">
-          <span className="group-hover/modal-btn:translate-x-40 text-center transition duration-500">
-            Adicionar Investimento
-          </span>
-          <div className="-translate-x-40 group-hover/modal-btn:translate-x-0 flex items-center justify-center absolute inset-0 transition duration-500 text-white z-20">
-            📈
+
+    <button
+      className="bg-black text-white p-2 rounded-md hover:bg-gray-800 transition duration-300"
+      onClick={() => setIsModalOpen(true)}
+    >
+      Adicionar Investimento
+    </button>
+
+
+    {isModalOpen && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
+          <h4 className="text-lg font-bold mb-4">Adicione um novo investimento</h4>
+          <div className="flex flex-col gap-4">
+            <input
+              type="number"
+              placeholder="Valor"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+            <input
+              type="text"
+              placeholder="Descrição"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            >
+              <option value="">Selecione uma categoria</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="DD/MM/AAAA HH:mm"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md"
+            />
           </div>
-        </ModalTrigger>
-        <ModalBody>
-          <ModalContent>
-            <h4 className="text-lg md:text-2xl text-neutral-600 dark:text-neutral-100 font-bold text-center mb-8">
-              Adicione um novo investimento
-            </h4>
-            <div className="py-10 flex flex-col gap-6 items-start justify-start max-w-sm mx-auto">
-              <input
-                type="number"
-                placeholder="Valor"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-              <input
-                type="text"
-                placeholder="Descrição"
-                value={description}
-                onChange={e =>
-                  setDescription(e.target.value)
-                }
-                className="w-full p-2 border border-gray-300 rounded-md"
-              />
-              <select
-                value={categoryId}
-                onChange={handleCategoryChange}
-                className="w-full p-2 border border-gray-300 rounded-md"
-              >
-                <option value="">Selecione uma categoria</option>
-                {categories && categories.length > 0 ? (
-                  categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))
-                ) : (
-                  <option disabled>Carregando categorias...</option>
-                )}
-              </select>
-              <input
-                     type="text"
-                     value={date}
-                     onChange={(e) => setDate(formatDateTime(e.target.value))}
-                     onBlur={() => {
-                       if (!isValidDateTime(date)) {
-                         alert('Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.');
-                       }
-                     }}
-                     placeholder="DD/MM/AAAA HH:mm"
-                     className="w-full p-2 border border-gray-300 rounded-md"
-              />
-            </div>
-            <ModalFooter className="gap-2">
-            <button onClick={() => setDate(getCurrentDateTime())}>
-                Cancelar
-              </button>
-              <button onClick={handleSubmit}>Confirmar</button>
-            </ModalFooter>
-          </ModalContent>
-        </ModalBody>
-      </Modal>
-    </div>
+          <div className="flex justify-end gap-4 mt-4">
+            <button
+              className="bg-gray-300 text-black p-2 rounded-md hover:bg-gray-400 transition duration-300"
+              onClick={resetForm}
+            >
+              Cancelar
+            </button>
+            <button
+              className="bg-neutral-800 text-neutral-100 p-2 rounded-md hover:bg-neutral-700 transition duration-300" 
+               onClick={handleSubmit}
+            >
+              Confirmar
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
   );
 }

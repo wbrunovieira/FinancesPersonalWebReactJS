@@ -18,6 +18,7 @@ export function AddIncome() {
   const [description, setDescription] = useState('');
   const [categoryId, setCategoryId] = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [date, setDate] = useState('');
 
@@ -67,6 +68,8 @@ export function AddIncome() {
   
       fetchCategories();
     }, []);
+
+    
 
     const handleSubmit = async (): Promise<void> => {
       if (!amount || !description || !categoryId || !date) {
@@ -129,25 +132,45 @@ export function AddIncome() {
     const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>): void => {
         setCategoryId(e.target.value);
       };
-    
 
+      
+
+      const resetForm = () => {
+        setAmount('');
+        setDescription('');
+        setCategoryId('');
+        setDate(getCurrentDateTime());
+        setIsModalOpen(false);
+      };
+    
+      useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+          if (event.key === 'Escape' && isModalOpen) {
+            resetForm();
+          }
+        };
+    
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+          window.removeEventListener('keydown', handleKeyDown);
+        };
+      }, [isModalOpen]);
   return (
     <div className="py-4 flex items-center justify-center">
-      <Modal>
-        <ModalTrigger className="bg-black dark:bg-white dark:text-black text-white flex justify-center group/modal-btn">
-          <span className="group-hover/modal-btn:translate-x-40 text-center transition duration-500">
-            Adicionar Rendimento
-          </span>
-          <div className="-translate-x-40 group-hover/modal-btn:translate-x-0 flex items-center justify-center absolute inset-0 transition duration-500 text-white z-20">
-            💰
-          </div>
-        </ModalTrigger>
-        <ModalBody>
-          <ModalContent>
-            <h4 className="text-lg md:text-2xl text-neutral-600 dark:text-neutral-100 font-bold text-center mb-8">
-              Adicione um novo rendimento
-            </h4>
-            <div className="py-10 flex flex-col gap-6 items-start justify-start max-w-sm mx-auto">
+      {/* Botão para abrir o modal */}
+      <button
+        className="bg-black text-white p-2 rounded-md hover:bg-gray-800 transition duration-300"
+        onClick={() => setIsModalOpen(true)}
+      >
+        Adicionar Rendimento
+      </button>
+
+      {/* Render Condicional do Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
+            <h4 className="text-lg font-bold mb-4">Adicione um novo rendimento</h4>
+            <div className="flex flex-col gap-4">
               <input
                 type="number"
                 placeholder="Valor"
@@ -162,9 +185,9 @@ export function AddIncome() {
                 onChange={(e) => setDescription(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
-                     <select
+              <select
                 value={categoryId}
-                onChange={handleCategoryChange}
+                onChange={(e) => setCategoryId(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               >
                 <option value="">Selecione uma categoria</option>
@@ -176,26 +199,29 @@ export function AddIncome() {
               </select>
               <input
                 type="text"
-                value={date}
-                onChange={(e) => setDate(formatDateTime(e.target.value))}
-                onBlur={() => {
-                  if (!isValidDateTime(date)) {
-                    alert('Data/hora inválida. Por favor, siga o formato DD/MM/AAAA HH:mm.');
-                  }
-                }}
                 placeholder="DD/MM/AAAA HH:mm"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
-            <ModalFooter className="gap-1">
-            <button onClick={() => setDate(getCurrentDateTime())}>
+            <div className="flex justify-end gap-4 mt-4">
+              <button
+                className="bg-gray-300 text-black p-2 rounded-md hover:bg-gray-400 transition duration-300"
+                onClick={resetForm}
+              >
                 Cancelar
               </button>
-              <button onClick={handleSubmit}>Confirmar</button>
-            </ModalFooter>
-          </ModalContent>
-        </ModalBody>
-      </Modal>
+              <button
+                className="bg-neutral-800 text-neutral-100 p-2 rounded-md hover:bg-neutral-700 transition duration-300"  
+                onClick={handleSubmit}
+              >
+                Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

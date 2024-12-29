@@ -13,13 +13,12 @@ export function AddExpense(): JSX.Element {
   const [date, setDate] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Helper: Obter data e hora atual formatada
+
   const getCurrentDateTime = (): string => {
     const now = new Date();
     return now.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
   };
 
-  // Fetch categorias ao carregar o componente
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -39,12 +38,12 @@ export function AddExpense(): JSX.Element {
     fetchCategories();
   }, []);
 
-  // Set data atual ao carregar o componente
+
   useEffect(() => {
     setDate(getCurrentDateTime());
   }, []);
+  
 
-  // Fechar modal com Esc
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && isModalOpen) {
@@ -58,7 +57,7 @@ export function AddExpense(): JSX.Element {
     };
   }, [isModalOpen]);
 
-  // Submit: Enviar dados para API
+
   const handleSubmit = async () => {
     if (!amount || !description || !categoryId || !date) {
       alert('Preencha todos os campos antes de enviar.');
@@ -95,7 +94,7 @@ export function AddExpense(): JSX.Element {
     }
   };
 
-  // Helper: Resetar o formulário e fechar modal
+
   const resetForm = () => {
     setAmount('');
     setDescription('');
@@ -104,10 +103,10 @@ export function AddExpense(): JSX.Element {
     setIsModalOpen(false);
   };
 
-  // Render
+
   return (
     <div className="py-4 flex items-center justify-center">
-      {/* Botão para abrir o modal */}
+
       <button
         className="bg-black text-white p-2 rounded-md hover:bg-gray-800 transition duration-300"
         onClick={() => setIsModalOpen(true)}
@@ -115,7 +114,7 @@ export function AddExpense(): JSX.Element {
         Adicionar Despesa
       </button>
 
-      {/* Render Condicional do Modal */}
+
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96 shadow-lg">
