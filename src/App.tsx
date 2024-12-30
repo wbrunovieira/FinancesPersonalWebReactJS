@@ -5,6 +5,7 @@ import { AddExpense } from './components/AddExpense';
 import { AddIncome } from './components/AddIncome';
 import { AddInvestment } from './components/AddInvestment';
 import { Button } from './components/ui/button';
+import { AddProjection } from './components/AddProjection';
 
 function App() {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ function App() {
           <AddExpense />
           <AddIncome />
           <AddInvestment />
+          <AddProjection />
         </section>
       </main>
 
