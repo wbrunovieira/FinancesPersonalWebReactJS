@@ -10,9 +10,23 @@ interface Transaction {
   date: string;
 }
 
+interface Projection {
+  id: number;
+  amount: number;
+  category: string;
+  description: string;
+  type: string;
+  date: string;
+  is_recurring: boolean;
+  end_month: string | null;
+}
+
 const Dashboard = () => {
   const [transactions, setTransactions] = useState<
     Transaction[]
+  >([]);
+  const [projections, setProjections] = useState<
+    Projection[]
   >([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -39,21 +53,39 @@ const Dashboard = () => {
       setTransactions(data);
     } catch (err: any) {
       setError(err.message);
-    } finally {
-      setLoading(false);
     }
   };
 
-  const filterTransactionsByMonth = (
-    transactions: Transaction[]
+  const fetchProjections = async () => {
+    try {
+      const response = await fetch(
+        'http://192.168.0.9:8080/projections',
+        {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar as projeções');
+      }
+
+      const data: Projection[] = await response.json();
+      setProjections(data);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  const filterByMonth = <T extends { date: string }>(
+    items: T[]
   ) => {
-    return transactions.filter(transaction => {
-      const transactionDate = new Date(transaction.date);
+    return items.filter(item => {
+      const itemDate = new Date(item.date);
       return (
-        transactionDate.getFullYear() ===
+        itemDate.getFullYear() ===
           selectedMonth.getFullYear() &&
-        transactionDate.getMonth() ===
-          selectedMonth.getMonth()
+        itemDate.getMonth() === selectedMonth.getMonth()
       );
     });
   };
@@ -71,22 +103,25 @@ const Dashboard = () => {
   };
 
   useEffect(() => {
-    fetchTransactions();
+    setLoading(true);
+    Promise.all([
+      fetchTransactions(),
+      fetchProjections(),
+    ]).finally(() => setLoading(false));
   }, []);
 
-  const filteredTransactions =
-    filterTransactionsByMonth(transactions);
+  const filteredTransactions = filterByMonth(transactions);
+  const filteredProjections = filterByMonth(projections);
 
-  const calculateTotals = (
-    data: Transaction[],
+  const calculateTotals = <
+    T extends { type: string; amount: number }
+  >(
+    data: T[],
     type: string
   ) =>
     data
-      .filter(transaction => transaction.type === type)
-      .reduce(
-        (sum, transaction) => sum + transaction.amount,
-        0
-      );
+      .filter(item => item.type === type)
+      .reduce((sum, item) => sum + item.amount, 0);
 
   const totalExpenses = calculateTotals(
     filteredTransactions,
@@ -100,6 +135,20 @@ const Dashboard = () => {
     filteredTransactions,
     'investment'
   );
+
+  const totalProjectedExpenses = calculateTotals(
+    filteredProjections,
+    'expense'
+  );
+  const totalProjectedIncomes = calculateTotals(
+    filteredProjections,
+    'income'
+  );
+  const totalProjectedInvestments = calculateTotals(
+    filteredProjections,
+    'investment'
+  );
+
   const balance =
     totalIncomes - totalExpenses - totalInvestments;
 
@@ -190,93 +239,114 @@ const Dashboard = () => {
                     })}
                   </span>
                 </li>
+                <li className="flex justify-between py-1">
+                  <span>Projeções de Despesas:</span>
+                  <span className="text-red-500">
+                    {totalProjectedExpenses.toLocaleString(
+                      'pt-BR',
+                      {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }
+                    )}
+                  </span>
+                </li>
+                <li className="flex justify-between py-1">
+                  <span>Projeções de Rendas:</span>
+                  <span className="text-green-500">
+                    {totalProjectedIncomes.toLocaleString(
+                      'pt-BR',
+                      {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }
+                    )}
+                  </span>
+                </li>
+                <li className="flex justify-between py-1">
+                  <span>Projeções de Investimentos:</span>
+                  <span className="text-blue-500">
+                    {totalProjectedInvestments.toLocaleString(
+                      'pt-BR',
+                      {
+                        style: 'currency',
+                        currency: 'BRL',
+                      }
+                    )}
+                  </span>
+                </li>
               </ul>
             </div>
 
-            <div className="grid grid-cols-1  gap-4">
+            <div className="grid grid-cols-1 gap-4">
+              {/* Transações */}
               <div className="bg-card shadow-md rounded-lg p-4">
                 <h3 className="text-lg font-bold mb-2">
-                  Despesas
+                  Transações
                 </h3>
-                {filteredTransactions
-                  .filter(t => t.type === 'expense')
-                  .map(t => (
-                    <p key={t.id} className="py-1 border-b">
-                      <span className="font-bold">
-                        {new Date(
-                          t.date
-                        ).toLocaleDateString('pt-BR')}
-                        :
-                      </span>{' '}
-                      <span>{t.category}</span> -{' '}
-                      <span className="italic">
-                        {t.description}
-                      </span>
-                      :{' '}
-                      <span>
-                        {t.amount.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </span>
-                    </p>
-                  ))}
+                {filteredTransactions.map(t => (
+                  <p key={t.id} className="py-1 border-b">
+                    <span className="font-bold">
+                      {new Date(t.date).toLocaleDateString(
+                        'pt-BR'
+                      )}
+                      :
+                    </span>{' '}
+                    <span>{t.category}</span> -{' '}
+                    <span className="italic">
+                      {t.description}
+                    </span>
+                    :{' '}
+                    <span>
+                      {t.amount.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </span>
+                  </p>
+                ))}
               </div>
+
+              {/* Projeções */}
               <div className="bg-card shadow-md rounded-lg p-4">
                 <h3 className="text-lg font-bold mb-2">
-                  Rendas
+                  Projeções
                 </h3>
-                {filteredTransactions
-                  .filter(t => t.type === 'income')
-                  .map(t => (
-                    <p key={t.id} className="py-1 border-b">
-                      <span className="font-bold">
-                        {new Date(
-                          t.date
-                        ).toLocaleDateString('pt-BR')}
-                        :
-                      </span>{' '}
-                      <span>{t.category}</span> -{' '}
-                      <span className="italic">
-                        {t.description}
+                {filteredProjections.map(p => (
+                  <p key={p.id} className="py-1 border-b">
+                    <span className="font-bold">
+                      {new Date(p.date).toLocaleDateString(
+                        'pt-BR'
+                      )}
+                      :
+                    </span>{' '}
+                    <span>{p.category}</span> -{' '}
+                    <span className="italic">
+                      {p.description}
+                    </span>
+                    :{' '}
+                    <span>
+                      {p.amount.toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                    </span>{' '}
+                    {p.is_recurring && (
+                      <span className="text-sm text-gray-500">
+                        (Recorrente até{' '}
+                        {p.end_month
+                          ? new Date(
+                              p.end_month
+                            ).toLocaleDateString('pt-BR', {
+                              month: 'long',
+                              year: 'numeric',
+                            })
+                          : 'indefinido'}
+                        )
                       </span>
-                      :{' '}
-                      <span>
-                        {t.amount.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </span>
-                    </p>
-                  ))}
-              </div>
-              <div className="bg-card shadow-md rounded-lg p-4">
-                <h3 className="text-lg font-bold mb-2">
-                  Investimentos
-                </h3>
-                {filteredTransactions
-                  .filter(t => t.type === 'investment')
-                  .map(t => (
-                    <p key={t.id} className="py-1 border-b">
-                      <span className="font-bold">
-                        {new Date(
-                          t.date
-                        ).toLocaleDateString('pt-BR')}
-                        :
-                      </span>{' '}
-                      <span>{t.category}</span> -{' '}
-                      <span className="italic">
-                        {t.description}
-                      </span>
-                      :{' '}
-                      <span>
-                        {t.amount.toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                      </span>
-                    </p>
-                  ))}
+                    )}
+                  </p>
+                ))}
               </div>
             </div>
           </div>
