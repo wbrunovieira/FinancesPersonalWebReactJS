@@ -29,7 +29,7 @@ export function AddExpense(): JSX.Element {
         const response = await fetch(
           `${
             import.meta.env.VITE_API_BASE_URL
-          }/categories?type=expense`,
+          }/categories?category_type=expense`,
           {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },

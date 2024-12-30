@@ -25,7 +25,7 @@ const Statement = () => {
   const fetchTransactions = async () => {
     try {
       const response = await fetch(
-        'http://192.168.0.9:8080/transactions',
+        `${import.meta.env.VITE_API_BASE_URL}/transactions`,
         {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
