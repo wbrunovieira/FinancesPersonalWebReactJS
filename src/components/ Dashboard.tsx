@@ -18,7 +18,7 @@ interface Projection {
   type: string;
   date: string;
   is_recurring: boolean;
-  end_month: string | null;
+  end_month?: string; // Nullability resolvida
 }
 
 const Dashboard = () => {
@@ -71,7 +71,14 @@ const Dashboard = () => {
       }
 
       const data: Projection[] = await response.json();
-      setProjections(data);
+
+      // Normalizar os dados aqui
+      const normalizedData = data.map(p => ({
+        ...p,
+        end_month: p.end_month ?? undefined,
+      }));
+
+      setProjections(normalizedData);
     } catch (err: any) {
       setError(err.message);
     }
@@ -110,7 +117,9 @@ const Dashboard = () => {
     ]).finally(() => setLoading(false));
   }, []);
 
-  const filteredTransactions = filterByMonth(transactions);
+  const filteredTransactions = filterByMonth(
+    transactions.map(t => ({ ...t, is_recurring: false }))
+  );
   const filteredProjections = filterByMonth(projections);
 
   const calculateTotals = <
@@ -151,6 +160,10 @@ const Dashboard = () => {
 
   const balance =
     totalIncomes - totalExpenses - totalInvestments;
+
+  console.log('Selected Month:', selectedMonth);
+  console.log('Original Projections:', projections);
+  console.log('Filtered Projections:', filteredProjections);
 
   return (
     <div className="min-h-screen bg-foreground text-foreground flex flex-col items-center">
@@ -277,87 +290,9 @@ const Dashboard = () => {
                 </li>
               </ul>
             </div>
-
-            <div className="grid grid-cols-1 gap-4">
-              {/* Transações */}
-              <div className="bg-card shadow-md rounded-lg p-4">
-                <h3 className="text-lg font-bold mb-2">
-                  Transações
-                </h3>
-                {filteredTransactions.map(t => (
-                  <p key={t.id} className="py-1 border-b">
-                    <span className="font-bold">
-                      {new Date(t.date).toLocaleDateString(
-                        'pt-BR'
-                      )}
-                      :
-                    </span>{' '}
-                    <span>{t.category}</span> -{' '}
-                    <span className="italic">
-                      {t.description}
-                    </span>
-                    :{' '}
-                    <span>
-                      {t.amount.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </span>
-                  </p>
-                ))}
-              </div>
-
-              {/* Projeções */}
-              <div className="bg-card shadow-md rounded-lg p-4">
-                <h3 className="text-lg font-bold mb-2">
-                  Projeções
-                </h3>
-                {filteredProjections.map(p => (
-                  <p key={p.id} className="py-1 border-b">
-                    <span className="font-bold">
-                      {new Date(p.date).toLocaleDateString(
-                        'pt-BR'
-                      )}
-                      :
-                    </span>{' '}
-                    <span>{p.category}</span> -{' '}
-                    <span className="italic">
-                      {p.description}
-                    </span>
-                    :{' '}
-                    <span>
-                      {p.amount.toLocaleString('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                      })}
-                    </span>{' '}
-                    {p.is_recurring && (
-                      <span className="text-sm text-gray-500">
-                        (Recorrente até{' '}
-                        {p.end_month
-                          ? new Date(
-                              p.end_month
-                            ).toLocaleDateString('pt-BR', {
-                              month: 'long',
-                              year: 'numeric',
-                            })
-                          : 'indefinido'}
-                        )
-                      </span>
-                    )}
-                  </p>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </main>
-      <footer className="w-full py-4 bg-secondary text-secondary-foreground text-center">
-        <p className="text-sm">
-          &copy; {new Date().getFullYear()} WB Digital
-          Solutions. Todos os direitos reservados.
-        </p>
-      </footer>
     </div>
   );
 };
