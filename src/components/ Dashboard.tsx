@@ -170,6 +170,11 @@ const Dashboard = () => {
   const balance =
     totalIncomes - totalExpenses - totalInvestments;
 
+  const actualBalanceProjected =
+    totalProjectedIncomes -
+    totalProjectedExpenses -
+    totalProjectedInvestments;
+
   return (
     <div className="min-h-screen bg-foreground text-foreground flex flex-col items-center">
       <header className="w-full tracking-wider py-4 bg-primary text-primary-foreground shadow-lg flex items-center justify-center">
@@ -189,7 +194,6 @@ const Dashboard = () => {
         {error && <p className="text-red-500">{error}</p>}
         {!loading && !error && (
           <div className="w-full">
-            {/* Controle de meses */}
             <div className="flex items-center justify-between mb-6">
               <button
                 className="bg-secondary text-secondary-foreground py-2 px-4 rounded-lg hover:bg-secondary-foreground hover:text-secondary transition-colors"
@@ -212,61 +216,137 @@ const Dashboard = () => {
             </div>
 
             {/* Resumo */}
-            <div className="bg-card shadow-md rounded-lg p-4">
-              <h3 className="text-lg font-bold mb-2">
-                Resumo do efetuado
-              </h3>
-              <ul>
-                <li className="flex justify-between py-1">
-                  <span>Rendas:</span>
-                  <span className="text-green-500">
-                    {totalIncomes.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
-                </li>
-                <li className="flex justify-between py-1">
-                  <span>Despesas:</span>
-                  <span className="text-red-500">
-                    {totalExpenses.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
-                </li>
-                <li className="flex justify-between py-1">
-                  <span>Investimentos:</span>
-                  <span className="text-blue-500">
-                    {totalInvestments.toLocaleString(
-                      'pt-BR',
-                      {
+            <div className="grid grid-cols-2 gap-6">
+              <div className="w-full bg-card shadow-md rounded-lg p-4">
+                <h3 className="text-lg font-bold mb-2">
+                  Resumo da projeção
+                </h3>
+                <ul>
+                  <li className="flex justify-between py-1">
+                    <span>Rendas:</span>
+                    <span className="text-green-500">
+                      {totalProjectedIncomes.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <li className="flex justify-between py-1">
+                    <span>Despesas:</span>
+                    <span className="text-red-500">
+                      {totalProjectedExpenses.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <li className="flex justify-between py-1">
+                    <span>Investimentos:</span>
+                    <span className="text-blue-500">
+                      {totalProjectedInvestments.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <hr className="border-t border-gray-300 my-2" />
+                  <li className="flex justify-end py-1 font-bold text-3xl">
+                    <span className="text-lg mr-2 text-center">
+                      Saldo:
+                    </span>
+                    <span
+                      className={
+                        balance >= 0
+                          ? 'text-green-500'
+                          : 'text-red-500'
+                      }
+                    >
+                      {actualBalanceProjected.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="w-full bg-card shadow-md rounded-lg p-4">
+                <h3 className="text-lg font-bold mb-2">
+                  Resumo do efetuado
+                </h3>
+                <ul>
+                  <li className="flex justify-between py-1">
+                    <span>Rendas:</span>
+                    <span className="text-green-500">
+                      {totalIncomes.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <li className="flex justify-between py-1">
+                    <span>Despesas:</span>
+                    <span className="text-red-500">
+                      {totalExpenses.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <li className="flex justify-between py-1">
+                    <span>Investimentos:</span>
+                    <span className="text-blue-500">
+                      {totalInvestments.toLocaleString(
+                        'pt-BR',
+                        {
+                          style: 'currency',
+                          currency: 'BRL',
+                        }
+                      )}
+                    </span>
+                  </li>
+                  <hr className="border-t border-gray-300 my-2" />
+                  <li className="flex justify-end py-1 font-bold text-3xl">
+                    <span className="text-lg mr-2 text-center">
+                      Saldo:
+                    </span>
+                    <span
+                      className={
+                        balance >= 0
+                          ? 'text-green-500'
+                          : 'text-red-500'
+                      }
+                    >
+                      {balance.toLocaleString('pt-BR', {
                         style: 'currency',
                         currency: 'BRL',
-                      }
-                    )}
-                  </span>
-                </li>
-                <li className="flex justify-between py-1 font-bold">
-                  <span>Saldo:</span>
-                  <span
-                    className={
-                      balance >= 0
-                        ? 'text-green-500'
-                        : 'text-red-500'
-                    }
-                  >
-                    {balance.toLocaleString('pt-BR', {
-                      style: 'currency',
-                      currency: 'BRL',
-                    })}
-                  </span>
-                </li>
-              </ul>
+                      })}
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {/* Projeções e Resumo */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-6 mt-4">
               {/* Projeções */}
               <div className="bg-card shadow-md rounded-lg p-4">
                 <h3 className="text-lg font-bold mb-2">
@@ -352,97 +432,88 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                {/* Transações */}
-                <div className="bg-card shadow-md rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-2">
-                    Transações Efetuadas
-                  </h3>
-                  {Object.entries(groupedTransactions).map(
-                    ([category, transactions]) => {
-                      // Soma total por categoria
-                      const totalCategoryAmount =
-                        transactions.reduce(
-                          (sum, transaction) =>
-                            sum + transaction.amount,
-                          0
-                        );
-
-                      return (
-                        <div
-                          key={category}
-                          className="mb-6"
-                        >
-                          <h5 className="text-sm font-bold text-gray-700 mb-4">
-                            {category} - Total:{' '}
-                            {totalCategoryAmount.toLocaleString(
-                              'pt-BR',
-                              {
-                                style: 'currency',
-                                currency: 'BRL',
-                              }
-                            )}
-                          </h5>
-                          <ul>
-                            {transactions.map(
-                              transaction => (
-                                <li
-                                  key={transaction.id}
-                                  className="flex justify-between text-sm py-1"
-                                >
-                                  <span className="w-1/3 text-left">
-                                    {new Date(
-                                      transaction.date
-                                    ).toLocaleDateString(
-                                      'pt-BR'
-                                    )}
-                                  </span>
-                                  <span className="w-1/3 text-left">
-                                    {
-                                      transaction.description
-                                    }
-                                  </span>
-                                  <span className="w-1/3 text-right">
-                                    {transaction.amount.toLocaleString(
-                                      'pt-BR',
-                                      {
-                                        style: 'currency',
-                                        currency: 'BRL',
-                                      }
-                                    )}
-                                  </span>
-                                </li>
-                              )
-                            )}
-                          </ul>
-                        </div>
+              {/* Transações */}
+              <div className="bg-card shadow-md rounded-lg p-4">
+                <h3 className="text-lg font-bold mb-2">
+                  Transações Efetuadas
+                </h3>
+                {Object.entries(groupedTransactions).map(
+                  ([category, transactions]) => {
+                    // Soma total por categoria
+                    const totalCategoryAmount =
+                      transactions.reduce(
+                        (sum, transaction) =>
+                          sum + transaction.amount,
+                        0
                       );
-                    }
-                  )}
 
-                  {/* Saldo total de transações */}
-                  <div className="mt-6">
-                    <h4 className="text-md font-bold">
-                      Saldo Total
-                    </h4>
-                    <p className="text-lg">
-                      {Object.values(groupedTransactions)
-                        .reduce((total, transactions) => {
-                          return (
-                            total +
-                            transactions.reduce(
-                              (sum, transaction) =>
-                                sum + transaction.amount,
-                              0
-                            )
-                          );
-                        }, 0)
-                        .toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                    </p>
-                  </div>
+                    return (
+                      <div key={category} className="mb-6">
+                        <h5 className="text-sm font-bold text-gray-700 mb-4">
+                          {category} - Total:{' '}
+                          {totalCategoryAmount.toLocaleString(
+                            'pt-BR',
+                            {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }
+                          )}
+                        </h5>
+                        <ul>
+                          {transactions.map(transaction => (
+                            <li
+                              key={transaction.id}
+                              className="flex justify-between text-sm py-1"
+                            >
+                              <span className="w-1/3 text-left">
+                                {new Date(
+                                  transaction.date
+                                ).toLocaleDateString(
+                                  'pt-BR'
+                                )}
+                              </span>
+                              <span className="w-1/3 text-left">
+                                {transaction.description}
+                              </span>
+                              <span className="w-1/3 text-right">
+                                {transaction.amount.toLocaleString(
+                                  'pt-BR',
+                                  {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                  }
+                                )}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  }
+                )}
+
+                {/* Saldo total de transações */}
+                <div className="mt-6">
+                  <h4 className="text-md font-bold">
+                    Saldo Total
+                  </h4>
+                  <p className="text-lg">
+                    {Object.values(groupedTransactions)
+                      .reduce((total, transactions) => {
+                        return (
+                          total +
+                          transactions.reduce(
+                            (sum, transaction) =>
+                              sum + transaction.amount,
+                            0
+                          )
+                        );
+                      }, 0)
+                      .toLocaleString('pt-BR', {
+                        style: 'currency',
+                        currency: 'BRL',
+                      })}
+                  </p>
                 </div>
               </div>
             </div>
