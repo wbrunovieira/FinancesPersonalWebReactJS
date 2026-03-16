@@ -38,7 +38,7 @@ const Dashboard = () => {
   const fetchTransactions = async () => {
     try {
       const response = await fetch(
-        'http://192.168.0.9:8080/transactions'
+        `${import.meta.env.VITE_API_BASE_URL}/transactions`
       );
       if (!response.ok)
         throw new Error('Erro ao buscar as transações');
@@ -52,7 +52,7 @@ const Dashboard = () => {
   const fetchProjections = async () => {
     try {
       const response = await fetch(
-        'http://192.168.0.9:8080/projections'
+        `${import.meta.env.VITE_API_BASE_URL}/projections`
       );
       if (!response.ok)
         throw new Error('Erro ao buscar as projeções');
@@ -157,6 +157,38 @@ const Dashboard = () => {
     acc[transaction.category].push(transaction);
     return acc;
   }, {});
+
+  // Group transactions by day for the daily view
+  const transactionsByDay = (() => {
+    const groups: Record<string, Transaction[]> = {};
+    for (const tx of filteredTransactions) {
+      const dateKey = new Date(tx.date)
+        .toISOString()
+        .split('T')[0];
+      if (!groups[dateKey]) groups[dateKey] = [];
+      groups[dateKey].push(tx);
+    }
+    // Sort days ascending for balance calculation
+    const sortedDays = Object.entries(groups).sort(
+      ([a], [b]) => a.localeCompare(b)
+    );
+
+    // Calculate running balance per day
+    let runningBalance = 0;
+    const daysWithBalance = sortedDays.map(
+      ([dateKey, txs]) => {
+        const dayTotal = txs.reduce((sum, tx) => {
+          if (tx.type === 'income') return sum + tx.amount;
+          return sum - tx.amount;
+        }, 0);
+        runningBalance += dayTotal;
+        return { dateKey, txs, dayTotal, runningBalance };
+      }
+    );
+
+    // Return newest first
+    return daysWithBalance.reverse();
+  })();
 
   const groupedProjections = filteredProjections.reduce<
     Record<string, Projection[]>
@@ -352,58 +384,93 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
-                {/* Transações */}
-                <div className="bg-card shadow-md rounded-lg p-4">
-                  <h3 className="text-lg font-bold mb-2">
-                    Transações Efetuadas
-                  </h3>
-                  {Object.entries(groupedTransactions).map(
-                    ([category, transactions]) => {
-                      // Soma total por categoria
-                      const totalCategoryAmount =
-                        transactions.reduce(
-                          (sum, transaction) =>
-                            sum + transaction.amount,
-                          0
-                        );
-
-                      return (
-                        <div
-                          key={category}
-                          className="mb-6"
-                        >
-                          <h5 className="text-sm font-bold text-gray-700 mb-4">
-                            {category} - Total:{' '}
-                            {totalCategoryAmount.toLocaleString(
-                              'pt-BR',
-                              {
-                                style: 'currency',
-                                currency: 'BRL',
-                              }
-                            )}
-                          </h5>
-                          <ul>
-                            {transactions.map(
-                              transaction => (
-                                <li
-                                  key={transaction.id}
-                                  className="flex justify-between text-sm py-1"
+              {/* Movimentações por dia */}
+              <div className="bg-card shadow-md rounded-lg p-4">
+                <h3 className="text-lg font-bold mb-2">
+                  Movimentações
+                </h3>
+                {transactionsByDay.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    Nenhuma transação neste mês.
+                  </p>
+                ) : (
+                  <div className="space-y-3 max-h-[32rem] overflow-y-auto">
+                    {transactionsByDay.map(
+                      ({
+                        dateKey,
+                        txs,
+                        dayTotal,
+                        runningBalance,
+                      }) => (
+                        <div key={dateKey}>
+                          <div className="flex items-center justify-between px-3 py-1.5 bg-secondary rounded-t-lg border-b border-gray-600">
+                            <span className="text-secondary-foreground text-xs font-semibold">
+                              {new Date(
+                                dateKey + 'T12:00:00'
+                              ).toLocaleDateString(
+                                'pt-BR',
+                                {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: '2-digit',
+                                }
+                              )}
+                            </span>
+                            <div className="flex items-center gap-3">
+                              <span
+                                className={`text-xs font-semibold ${
+                                  dayTotal >= 0
+                                    ? 'text-green-400'
+                                    : 'text-red-400'
+                                }`}
+                              >
+                                {dayTotal >= 0 ? '+' : ''}
+                                {dayTotal.toLocaleString(
+                                  'pt-BR',
+                                  {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                  }
+                                )}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                Saldo:{' '}
+                                {runningBalance.toLocaleString(
+                                  'pt-BR',
+                                  {
+                                    style: 'currency',
+                                    currency: 'BRL',
+                                  }
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="space-y-1 mt-1">
+                            {txs.map(tx => {
+                              const isIncome =
+                                tx.type === 'income';
+                              return (
+                                <div
+                                  key={tx.id}
+                                  className="flex items-center justify-between py-2 px-3 bg-card rounded-lg border border-gray-700"
                                 >
-                                  <span className="w-1/3 text-left">
-                                    {new Date(
-                                      transaction.date
-                                    ).toLocaleDateString(
-                                      'pt-BR'
-                                    )}
-                                  </span>
-                                  <span className="w-1/3 text-left">
-                                    {
-                                      transaction.description
-                                    }
-                                  </span>
-                                  <span className="w-1/3 text-right">
-                                    {transaction.amount.toLocaleString(
+                                  <div>
+                                    <p className="text-sm font-medium">
+                                      {tx.description}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {tx.category}
+                                    </p>
+                                  </div>
+                                  <span
+                                    className={`text-sm font-semibold ${
+                                      isIncome
+                                        ? 'text-green-500'
+                                        : 'text-red-500'
+                                    }`}
+                                  >
+                                    {isIncome ? '+' : '-'}
+                                    {tx.amount.toLocaleString(
                                       'pt-BR',
                                       {
                                         style: 'currency',
@@ -411,39 +478,15 @@ const Dashboard = () => {
                                       }
                                     )}
                                   </span>
-                                </li>
-                              )
-                            )}
-                          </ul>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      );
-                    }
-                  )}
-
-                  {/* Saldo total de transações */}
-                  <div className="mt-6">
-                    <h4 className="text-md font-bold">
-                      Saldo Total
-                    </h4>
-                    <p className="text-lg">
-                      {Object.values(groupedTransactions)
-                        .reduce((total, transactions) => {
-                          return (
-                            total +
-                            transactions.reduce(
-                              (sum, transaction) =>
-                                sum + transaction.amount,
-                              0
-                            )
-                          );
-                        }, 0)
-                        .toLocaleString('pt-BR', {
-                          style: 'currency',
-                          currency: 'BRL',
-                        })}
-                    </p>
+                      )
+                    )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
