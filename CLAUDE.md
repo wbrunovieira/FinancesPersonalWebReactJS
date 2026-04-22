@@ -17,7 +17,7 @@ Package manager: **pnpm**
 
 ## Architecture
 
-- **Routing**: React Router DOM v7 with routes defined in `src/main.tsx` — `/` (Home), `/statement`, `/dashboard`
+- **Routing**: React Router DOM v7 with routes defined in `src/main.tsx` — `/` (Home/App.tsx), `/statement` (Statement.tsx), `/dashboard` (Dashboard.tsx)
 - **Styling**: Tailwind CSS + shadcn/ui (new-york style, stone base color, CSS variables). Path alias `@` → `src/`
 - **UI Components**: shadcn/ui components in `src/components/ui/`, app components in `src/components/`
 - **API**: REST backend at `VITE_API_BASE_URL` env var. Endpoints: `/transactions`, `/projections`, `/categories`
@@ -26,12 +26,39 @@ Package manager: **pnpm**
 
 ## Key Patterns
 
-- Form components (AddExpense, AddIncome, AddInvestment, AddProjection) use modal pattern with local state, POST to the API
-- Dashboard fetches both transactions and projections, filters by selected month, groups by category
-- Date format used in forms: `DD/MM/AAAA HH:mm` (Brazilian format), utility functions in `src/utils/dateUtils.ts`
-- `user_id` is hardcoded to `1` in all API payloads
+### Forms / Modals
+- AddExpense uses a simple fixed overlay modal with local state
+- AddIncome and AddInvestment use the Framer Motion `animated-modal` system (`src/components/ui/animated-modal.tsx`) — exports `Modal`, `ModalProvider`, `ModalTrigger`, `ModalBody`, `ModalContent`, `ModalFooter`
+- AddProjection supports recurring projections with an `is_recurring` flag and `end_month` selector
+- All forms fetch categories on mount via `GET /categories?category_type=expense|income|investment`
+- All API payloads hardcode `user_id: 1`
+
+### Date handling
+- Input format: `DD/MM/AAAA HH:mm` (Brazilian format)
+- Utilities: `formatDateTime(value)` and `isValidDateTime(value)` in `src/utils/dateUtils.ts`
+- API receives ISO date strings; Dashboard filters by `date.getFullYear()` + `date.getMonth()`
+
+### Dashboard
+- Fetches both `/transactions` and `/projections`, filters by selected month (month nav controls)
+- Groups projections by category, shows daily transaction movements with running balance
+- Month navigation increments/decrements a `Date` state object
+
+### Utility
+- `cn(...inputs)` in `src/lib/utils.ts` — clsx + tailwind-merge for className composition
+
+## Data Shapes
+
+```typescript
+// Transaction (from /transactions)
+{ id, user_id, amount, description, category_id, category, type, date, created_at, updated_at }
+
+// Projection (from /projections)
+{ id, amount, category, description, type, date, is_recurring, end_month? }
+
+// Category (from /categories)
+{ id, name, category_type }
+```
 
 ## Known Issues
 
-- The Dashboard component file has a space in its name: `src/components/ Dashboard.tsx` — imports reference this exact path
-- Dashboard hardcodes API URL (`http://192.168.0.9:8080`) instead of using `VITE_API_BASE_URL` env var like other components
+- The Dashboard component file has a leading space in its name: `src/components/ Dashboard.tsx` — imports reference this exact path with the space
