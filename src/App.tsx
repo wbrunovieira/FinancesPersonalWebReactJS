@@ -6,6 +6,7 @@ import { AddIncome } from './components/AddIncome';
 import { AddInvestment } from './components/AddInvestment';
 import { Button } from './components/ui/button';
 import { AddProjection } from './components/AddProjection';
+import { AddBatch } from './components/AddBatch';
 
 function App() {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ function App() {
           <AddIncome />
           <AddInvestment />
           <AddProjection />
+          <AddBatch />
         </section>
       </main>
 

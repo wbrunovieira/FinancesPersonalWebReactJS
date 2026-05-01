@@ -30,7 +30,8 @@ Package manager: **pnpm**
 - AddExpense uses a simple fixed overlay modal with local state
 - AddIncome and AddInvestment use the Framer Motion `animated-modal` system (`src/components/ui/animated-modal.tsx`) — exports `Modal`, `ModalProvider`, `ModalTrigger`, `ModalBody`, `ModalContent`, `ModalFooter`
 - AddProjection supports recurring projections with an `is_recurring` flag and `end_month` selector
-- All forms fetch categories on mount via `GET /categories?category_type=expense|income|investment`
+- AddExpense, AddIncome, AddInvestment fetch categories on mount via `GET /categories?category_type=expense|income|investment`
+- AddProjection is different: it fetches `GET /categories` (all categories, no filter), then filters client-side by `category.type === type` once the user selects a transaction type
 - All API payloads hardcode `user_id: 1`
 
 ### Date handling
@@ -41,7 +42,9 @@ Package manager: **pnpm**
 ### Dashboard
 - Fetches both `/transactions` and `/projections`, filters by selected month (month nav controls)
 - Groups projections by category, shows daily transaction movements with running balance
+- Running balance sign convention: `income` adds, `expense` and `investment` both subtract
 - Month navigation increments/decrements a `Date` state object
+- Date display uses `dateKey + 'T12:00:00'` when constructing `new Date()` to avoid UTC offset shifting the day
 
 ### Utility
 - `cn(...inputs)` in `src/lib/utils.ts` — clsx + tailwind-merge for className composition
